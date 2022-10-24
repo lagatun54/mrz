@@ -1,4 +1,3 @@
-//  �������� ������� ������ 921701 ���������� ��������� ���������
 #include "ImageCompressor.h"
 #include <fstream>
 
@@ -43,6 +42,10 @@ void ImageCompressor::setNetworkConfiguration() {
 }
 
 void ImageCompressor::imageToMatrix() {
+    std::string resulting = "resultDeltaY.txt";
+    std::cout << result.size();
+    std::fstream fout;
+    fout.open(resulting,std::ios::in | std::ios::out);
 
 	for (int i = 0; i < W; i += m) {
 
@@ -50,13 +53,15 @@ void ImageCompressor::imageToMatrix() {
 
 			std::vector<std::vector<double>> block;
 
-			for (auto k = j; k < j + n; k++) {
+			for (auto i_pixel = j; i_pixel < j + n; i_pixel++) {
 
-				for (auto o = i; o < i + m; o++) {
+				for (auto j_pixel = i; j_pixel < i + m; j_pixel++) {
 
 					std::vector<double> pixel;
 					for (auto t = 0; t < 3; t++) {
-						pixel.emplace_back(calculateCi(image(o, k, 0, t)));
+
+						pixel.emplace_back(calculateCi(image(j_pixel, i_pixel, 0, t)));
+                        fout << double (image(j_pixel, i_pixel, 0, t)) << ' ';
 					}
 					block.emplace_back(pixel);
 				}
@@ -68,7 +73,6 @@ void ImageCompressor::imageToMatrix() {
 	this->L = blocks.size();
 }
 
-// �������������� ������� (������� 1 �� ������������ ����������)
 long double ImageCompressor::calculateCi(long double Cijk) {
 	return (2 * Cijk) / Cmax - 1;
 }
@@ -101,9 +105,10 @@ void ImageCompressor::initializeWeights() {
 void ImageCompressor::study() {
 	
 	Matrix deltaX;
-	int iterationNumber = 0;
+    int iterationNumber = 0;
 
-	do {
+
+    do {
 
 		for (auto block : blocks) {
 
@@ -120,7 +125,9 @@ void ImageCompressor::study() {
 			adaptiveLearningStep = 1.0 / double(blockSize * blockSize + y.calculateMultiplicationWithTransposed());
 
 			Matrix ytmdx = y.Transposition() * deltaX;
-			ytmdx = ytmdx * adaptiveLearningStep;
+
+
+            ytmdx = ytmdx * adaptiveLearningStep;
 			secondWeights -= ytmdx;
 
 			adaptiveLearningStep = 1.0 / double(blockSize * blockSize + block.calculateMultiplicationWithTransposed());
@@ -183,7 +190,6 @@ void ImageCompressor::matrixToImage() {
 	resultImage.save("result.bmp");
 }
 
-// �������������� �������� �������� (������� 9 �� ������������ ����������)
 double ImageCompressor::CalculateUk(double Xi) {
 	double result = Cmax * (Xi + 1) / 2;
 	if (result < 0) {
